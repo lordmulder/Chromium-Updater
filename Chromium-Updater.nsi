@@ -23,7 +23,7 @@
 !include WinVer.nsh
 
 ; Global Symbols
-!define version "v1.06"
+!define version "v1.07"
 !define BuildBot_URL "http://build.chromium.org/f/chromium/"
 !define SourceCode_URL "http://src.chromium.org/viewvc/chrome/trunk"
 
@@ -235,6 +235,11 @@ Section ""
 
   ;-------------------
 
+  ### BEGIN(WORKAROUND) ###
+  StrCpy $Snapshot "TRUE"
+  Goto NoAskForSnapshot
+  ### END(WORKAROUND) ###
+  
   ClearErrors
   FileOpen $0 "$EXEDIR\Chromium-Updater.snp" r
   IfErrors AskForSnapshot
@@ -263,7 +268,7 @@ Section ""
   StrCpy $TempURL "${BuildBot_URL}/continuous/win/LATEST"
   StrCpy $TempFile "REVISION"
   StrCmp $Snapshot "TRUE" 0 NoSnapshotDetect
-  StrCpy $TempURL "${BuildBot_URL}/snapshots/chromium-rel-xp"
+  StrCpy $TempURL "${BuildBot_URL}/snapshots/Win"
   StrCpy $TempFile "LATEST"
   
   NoSnapshotDetect:
@@ -317,7 +322,7 @@ Section ""
 
   StrCpy $TempURL "${BuildBot_URL}/continuous/win/LATEST"
   StrCmp $Snapshot "TRUE" 0 NoSnapshotDownload
-  StrCpy $TempURL "${BuildBot_URL}/snapshots/chromium-rel-xp/$Revision"
+  StrCpy $TempURL "${BuildBot_URL}/snapshots/Win/$Revision"
   
   NoSnapshotDownload:
   
