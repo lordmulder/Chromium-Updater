@@ -1,6 +1,6 @@
 ################################################################################
 # Chromium Updater                                                             #
-# Copyright (C) 2008-2011 LoRd_MuldeR <MuldeR2@GMX.de>                         #
+# Copyright (C) 2008-2012 LoRd_MuldeR <MuldeR2@GMX.de>                         #
 #                                                                              #
 # This program is free software; you can redistribute it and/or modify         #
 # it under the terms of the GNU General Public License as published by         #
@@ -23,9 +23,11 @@
 !include WinVer.nsh
 
 ; Global Symbols
-!define version "v1.07"
-!define BuildBot_URL "http://build.chromium.org/f/chromium/"
+!define version "v1.10"
+!define BuildBot_URL "http://commondatastorage.googleapis.com/"									;chromium-browser-snapshots" ;"http://build.chromium.org/f/chromium/"
 !define SourceCode_URL "http://src.chromium.org/viewvc/chrome/trunk"
+!define Path_Snapshots "chromium-browser-snapshots"
+!define Path_Continuous "chromium-browser-continuous"
 
 Name "Chromium Auto-Updater"
 Caption "Chromium Auto-Updater"
@@ -57,9 +59,7 @@ Page instfiles
 ; Vars
 Var Current
 Var Revision
-Var Snapshot
-Var TempURL
-Var TempFile
+Var Address
 
 ; Multi-User
 !define MULTIUSER_EXECUTIONLEVEL Admin
@@ -203,11 +203,13 @@ Section ""
   InitPluginsDir
   SetOutPath $EXEDIR
 
-  StrCpy $Revision ""
   StrCpy $Current ""
-  StrCpy $Snapshot ""
+  StrCpy $Revision ""
+  StrCpy $Address ""
 
-  ;-------------------
+  ;--------------------------
+  ; Chrome installed?
+  ;--------------------------
 
   ${DetailPrint} "Location: $EXEDIR"
   
@@ -217,76 +219,77 @@ Section ""
   
   ChromeIsInstalled:
   
-  ;-------------------
+  ;--------------------------
+  ; Detect Version
+  ;--------------------------
 
   ${DetailPrint} "Detecting installed version, please wait..."
 
-  IfFileExists "$EXEDIR\Chromium-Updater.cpq" 0 SkipVersionDetection
-  
   ClearErrors
-  FileOpen $0 "$EXEDIR\Chromium-Updater.cpq" r
+  ReadINIStr $Current "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "revision"
   IfErrors SkipVersionDetection
-  FileRead $0 $Current
-  FileClose $0
+
   IntOp $Current $Current + 0
   
   SkipVersionDetection:
   ${ListPrint} "Currently installed build" $Current
 
-  ;-------------------
-
-  ### BEGIN(WORKAROUND) ###
-  StrCpy $Snapshot "TRUE"
-  Goto NoAskForSnapshot
-  ### END(WORKAROUND) ###
-  
+  ;--------------------------
+  ; Load Config
+  ;--------------------------
+ 
   ClearErrors
-  FileOpen $0 "$EXEDIR\Chromium-Updater.snp" r
-  IfErrors AskForSnapshot
-  FileRead $0 $Snapshot
-  FileClose $0
-  StrCmp $Snapshot "TRUE" NoAskForSnapshot
-  StrCmp $Snapshot "FALSE" NoAskForSnapshot
-  
-  AskForSnapshot:
-  StrCpy $Snapshot "TRUE"
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get only Chromium builds that have passed all automated tests?" IDNO AfterAskForSnapshot
-  StrCpy $Snapshot "FALSE"
-  
-  AfterAskForSnapshot:
-  ClearErrors
-  FileOpen $0 "$EXEDIR\Chromium-Updater.snp" w
-  IfErrors NoAskForSnapshot
-  FileWrite $0 $Snapshot
-  FileClose $0
-  MessageBox MB_ICONEXCLAMATION|MB_OK|MB_TOPMOST "Your decision has been saved. You can delete 'Chromium-Updater.snp' to choose again!"
-  
-  NoAskForSnapshot:
+  ReadINIStr $0 "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel"
+  IfErrors NotConfiguredYet
 
-  ;-------------------
-
-  StrCpy $TempURL "${BuildBot_URL}/continuous/win/LATEST"
-  StrCpy $TempFile "REVISION"
-  StrCmp $Snapshot "TRUE" 0 NoSnapshotDetect
-  StrCpy $TempURL "${BuildBot_URL}/snapshots/Win"
-  StrCpy $TempFile "LATEST"
+  StrCmp $0 "snapshots" ConfigurationDone
+  StrCmp $0 "continuous" ConfigurationDone
   
-  NoSnapshotDetect:
+  NotConfiguredYet:
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get only Chromium builds that have passed all automated tests?$\nOtherwise always the latest snapshot build will be downloaded." IDNO GetSnapshotBuilds
+  
+  StrCpy $0 "continuous"
+  Goto SaveConfiguration
+  GetSnapshotBuilds:
+  StrCpy $0 "snapshots"
+  Goto SaveConfiguration
+
+  SaveConfiguration:
+  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel" $0
+  
+  ConfigurationDone:
+
+  ;--------------------------
+  ; Set Address
+  ;--------------------------
+
+  ${ListPrint} "Selected update channel" $0
+  
+  StrCmp $0 "continuous" 0 +2
+  StrCpy $Address "${BuildBot_URL}${Path_Continuous}/Win"
+  StrCmp $0 "snapshots" 0 +2
+  StrCpy $Address "${BuildBot_URL}${Path_Snapshots}/Win"
+  
+  ;--------------------------
+  ; Fetch latest version
+  ;--------------------------
   
   ${DetailPrint} "Searching for latest Chromium build, please wait..."
-  ${Download} "banner" "Downloading version information..." "$TempURL/$TempFile" "$PLUGINSDIR\$TempFile"
+  ${Download} "banner" "Downloading version information..." "$Address/LAST_CHANGE" "$PLUGINSDIR\LAST_CHANGE.txt"
   
   ClearErrors
-  FileOpen $0 "$PLUGINSDIR\$TempFile" r
+  FileOpen $0 "$PLUGINSDIR\LAST_CHANGE.txt" r
   IfErrors SkipBuildDetection
   FileRead $0 $Revision
   FileClose $0
   IntOp $Revision $Revision + 0
   
   SkipBuildDetection:
-  Delete "$PLUGINSDIR\$TempFile.txt"
+  Delete "$PLUGINSDIR\LAST_CHANGE.txt"
   
-  ;-------------------
+  ;--------------------------
+  ; Check version info
+  ;--------------------------
   
   StrCmp $Revision "" BuildInfoNotFound
   StrCmp $Revision "0" BuildInfoNotFound
@@ -297,17 +300,12 @@ Section ""
   ${MyAbort} "Update has failed."
   
   BuildInfoFound:
-  StrCmp $Snapshot "TRUE" PrintRevisionSnapshot PrintRevisionStable
-  
-  PrintRevisionStable:
-  ${ListPrint} "Latest stable build available" $Revision
-  Goto CheckIfUpdateRequired
-  
-  PrintRevisionSnapshot:
   ${ListPrint} "Latest snapshot build available" $Revision
-  Goto CheckIfUpdateRequired
 
-  CheckIfUpdateRequired:
+  ;--------------------------
+  ; Is update required?
+  ;--------------------------
+
   StrCmp $Current "" BeginUpdate
   IntCmp $Revision $Current 0 0 BeginUpdate
 
@@ -318,18 +316,16 @@ Section ""
   
   BeginUpdate:
   
-  ;-------------------
-
-  StrCpy $TempURL "${BuildBot_URL}/continuous/win/LATEST"
-  StrCmp $Snapshot "TRUE" 0 NoSnapshotDownload
-  StrCpy $TempURL "${BuildBot_URL}/snapshots/Win/$Revision"
-  
-  NoSnapshotDownload:
+  ;--------------------------
+  ; Download new version
+  ;--------------------------
   
   ${DetailPrint} "Downloading Chromium build $Revision, please wait..."
-  ${Download} "popup" "Chromium $Revision" "$TempURL/chrome-win32.zip" "$PLUGINSDIR\chrome-win32.zip"
+  ${Download} "popup" "Chromium $Revision" "$Address/$Revision/chrome-win32.zip" "$PLUGINSDIR\chrome-win32.zip"
   
-  ;-------------------
+  ;--------------------------
+  ; Extract new files
+  ;--------------------------
 
   ${DetailPrint} "Extracting files, please wait..."
 
@@ -350,7 +346,9 @@ Section ""
   Delete "$PLUGINSDIR\chrome-win32.zip"
   Delete "$PLUGINSDIR\unzip.exe"
 
-  ;-------------------
+  ;--------------------------
+  ; Files complete?
+  ;--------------------------
 
   IfFileExists "$PLUGINSDIR\cache\chrome-win32\chrome.exe" 0 MissingFile
   IfFileExists "$PLUGINSDIR\cache\chrome-win32\chrome.dll" 0 MissingFile
@@ -362,12 +360,16 @@ Section ""
   
   AllFilesThere:
   
-  ;-------------------
+  ;--------------------------
+  ; Is Chrome running?
+  ;--------------------------
 
   ${DetailPrint} "Checking for running instances, please wait..."
   ${CheckInstances}
 
-  ;-------------------
+  ;--------------------------
+  ; Install the new files
+  ;--------------------------
 
   ${DetailPrint} "Installing the new files, please wait..."
 
@@ -383,19 +385,18 @@ Section ""
   CopySuccessfull:
   RMDir /r "$PLUGINSDIR\cache"
   
-  ;-------------------
+  ;--------------------------
+  ; Remember revision
+  ;--------------------------
 
   ${DetailPrint} "Saving version information, please wait..."
 
   ClearErrors
-  FileOpen $0 "$EXEDIR\Chromium-Updater.cpq" w
-  IfErrors SkipWriteVersion
-  FileWrite $0 $Revision
-  FileClose $0
- 
-  SkipWriteVersion:
+  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "revision" $0
 
-  ;-------------------
+  ;--------------------------
+  ; Done
+  ;--------------------------
 
   ${DetailPrint} "Update completed successfully."
   SetAutoClose true
@@ -410,4 +411,8 @@ FunctionEnd
 
 Function .onInit
   !insertmacro MULTIUSER_INIT
+FunctionEnd
+
+Function .onGuiInit
+  Aero::Apply
 FunctionEnd
