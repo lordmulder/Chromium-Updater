@@ -300,7 +300,7 @@ Section ""
   ${MyAbort} "Update has failed."
   
   BuildInfoFound:
-  ${ListPrint} "Latest snapshot build available" $Revision
+  ${ListPrint} "Latest build available on server" $Revision
 
   ;--------------------------
   ; Is update required?
@@ -392,7 +392,7 @@ Section ""
   ${DetailPrint} "Saving version information, please wait..."
 
   ClearErrors
-  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "revision" $0
+  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "revision" $Revision
 
   ;--------------------------
   ; Done
