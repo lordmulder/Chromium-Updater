@@ -26,6 +26,7 @@
 
 ; Includes
 !include WinVer.nsh
+!include StdUtils.nsh
 
 ; Global Symbols
 !define BuildBot_URL "http://commondatastorage.googleapis.com/"									;chromium-browser-snapshots" ;"http://build.chromium.org/f/chromium/"
@@ -335,7 +336,7 @@ Section ""
   ;--------------------------
 
   ${DetailPrint} "Extracting files, please wait..."
-
+  
   CreateDirectory "$PLUGINSDIR\cache"
   File /oname=$PLUGINSDIR\unzip.exe "..\etc\unzip.exe"
 
@@ -373,6 +374,16 @@ Section ""
 
   ${DetailPrint} "Checking for running instances, please wait..."
   ${CheckInstances}
+
+  ;--------------------------
+  ; Clean-UP
+  ;--------------------------
+
+  Delete "$EXEDIR\*.exe"
+  Delete "$EXEDIR\*.dll"
+  Delete "$EXEDIR\*.bin"
+  Delete "$EXEDIR\*.manifest"
+  Delete "$EXEDIR\*.pak"
 
   ;--------------------------
   ; Install the new files
@@ -413,7 +424,7 @@ Section ""
 SectionEnd
 
 Function .onInstSuccess
-  Exec '"$EXEDIR\chrome.exe" "about:" "${SourceCode_URL}/?view=log"'
+  ${StdUtils.ExecShellAsUser} $0 '"$EXEDIR\chrome.exe" "about:" "${SourceCode_URL}/?view=log"' "open" ""
 FunctionEnd
 
 Function .onInit
