@@ -60,6 +60,7 @@ Page instfiles
 Var Current
 Var Revision
 Var Address
+Var Channel
 
 ; Multi-User
 !define MULTIUSER_EXECUTIONLEVEL Admin
@@ -206,6 +207,7 @@ Section ""
   StrCpy $Current ""
   StrCpy $Revision ""
   StrCpy $Address ""
+  StrCpy $Channel ""
 
   ;--------------------------
   ; Chrome installed?
@@ -239,35 +241,34 @@ Section ""
   ;--------------------------
  
   ClearErrors
-  ReadINIStr $0 "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel"
+  ReadINIStr $Channel "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel"
   IfErrors NotConfiguredYet
 
-  StrCmp $0 "snapshots" ConfigurationDone
-  StrCmp $0 "continuous" ConfigurationDone
+  StrCmp $Channel "snapshots" ConfigurationDone
+  StrCmp $Channel "continuous" ConfigurationDone
   
   NotConfiguredYet:
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get only Chromium builds that have passed all automated tests?$\nOtherwise always the latest snapshot build will be downloaded." IDNO GetSnapshotBuilds
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get 'continous' Chromium builds, i.e. only builds that have passed all automated tests? (Recommended)$\n$\nOtherwise always the latest 'snapshot' build will be downloaded." IDNO GetSnapshotBuilds
   
-  StrCpy $0 "continuous"
+  StrCpy $Channel "continuous"
   Goto SaveConfiguration
   GetSnapshotBuilds:
-  StrCpy $0 "snapshots"
+  StrCpy $Channel "snapshots"
   Goto SaveConfiguration
 
   SaveConfiguration:
-  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel" $0
+  WriteINIStr "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel" $Channel
   
   ConfigurationDone:
 
   ;--------------------------
   ; Set Address
   ;--------------------------
-
-  ${ListPrint} "Selected update channel" $0
   
-  StrCmp $0 "continuous" 0 +2
+  StrCmp $Channel "continuous" 0 +2
   StrCpy $Address "${BuildBot_URL}${Path_Continuous}/Win"
-  StrCmp $0 "snapshots" 0 +2
+
+  StrCmp $Channel "snapshots" 0 +2
   StrCpy $Address "${BuildBot_URL}${Path_Snapshots}/Win"
   
   ;--------------------------
@@ -275,6 +276,8 @@ Section ""
   ;--------------------------
   
   ${DetailPrint} "Searching for latest Chromium build, please wait..."
+  ${ListPrint} "Selected update channel" $Channel
+
   ${Download} "banner" "Downloading version information..." "$Address/LAST_CHANGE" "$PLUGINSDIR\LAST_CHANGE.txt"
   
   ClearErrors
