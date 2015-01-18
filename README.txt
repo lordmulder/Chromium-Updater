@@ -1,5 +1,5 @@
 Chromium Updater - Auto-Update Script for the Chromium Web-Browser
-Copyright (C) 2008-2015 LoRd_MuldeR <MuldeR2@GMX.de>
+Copyright (C) 2008-2015 LoRd_MuldeR <MuldeR2@GMX.de>. Some Rights Reserved.
 
 Please visit http://muldersoft.com/ for news and updates!
 

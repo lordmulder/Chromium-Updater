@@ -23,11 +23,11 @@ if not "%ERRORLEVEL%"=="0" (
 
 copy /Y /V "%~dp0\*.txt" "%~dp0\bin"
 
-echo Chromium Updater v%UPDATER_VERSION% (%ISO_DATE%) >           "%~dp0\bin\VERSION"
-echo Copyright (C) 2008-2015 LoRd_MuldeR ^<MuldeR2@GMX.de^> >>    "%~dp0\bin\VERSION"
-echo. >>                                                          "%~dp0\bin\VERSION"
-echo Please visit http://muldersoft.com/ for news and updates! >> "%~dp0\bin\VERSION"
-echo. >>                                                          "%~dp0\bin\VERSION"
+echo Chromium Updater v%UPDATER_VERSION% (%ISO_DATE%) >                               "%~dp0\bin\VERSION"
+echo Copyright (C) 2008-2015 LoRd_MuldeR ^<MuldeR2@GMX.de^>. Some Rights Reserved. >> "%~dp0\bin\VERSION"
+echo. >>                                                                              "%~dp0\bin\VERSION"
+echo Please visit http://muldersoft.com/ for news and updates! >>                     "%~dp0\bin\VERSION"
+echo. >>                                                                              "%~dp0\bin\VERSION"
 
 pushd "%~dp0\bin"
 "%~dp0\etc\zip.exe" -r -9 -z "%~dp0\out\Chromium-Updater.%ISO_DATE%.zip" "*.*" < "%~dp0\bin\VERSION"

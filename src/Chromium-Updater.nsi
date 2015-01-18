@@ -29,8 +29,8 @@
 !include StdUtils.nsh
 
 ; Global Symbols
-!define BuildBot_URL "http://commondatastorage.googleapis.com/"									;chromium-browser-snapshots" ;"http://build.chromium.org/f/chromium/"
-!define SourceCode_URL "http://src.chromium.org/viewvc/chrome/trunk"
+!define BuildBot_URL "http://commondatastorage.googleapis.com/"		;chromium-browser-snapshots" ;"http://build.chromium.org/f/chromium/"
+!define About_URL "http://www.chromium.org/"
 !define Path_Snapshots "chromium-browser-snapshots"
 !define Path_Continuous "chromium-browser-continuous"
 
@@ -353,6 +353,7 @@ Section ""
   SuccessfullyExtracted:
   Delete "$PLUGINSDIR\chrome-win32.zip"
   Delete "$PLUGINSDIR\unzip.exe"
+  Delete "$PLUGINSDIR\cache\chrome-win32\*.manifest"
 
   ;--------------------------
   ; Files complete?
@@ -379,12 +380,16 @@ Section ""
   ; Clean-UP
   ;--------------------------
 
+  ${DetailPrint} "Cleaning-up old files, please wait..."
+  
   Delete "$EXEDIR\*.exe"
+  Delete "$EXEDIR\*.nexe"
   Delete "$EXEDIR\*.dll"
   Delete "$EXEDIR\*.bin"
   Delete "$EXEDIR\*.manifest"
   Delete "$EXEDIR\*.pak"
-
+  Delete "$EXEDIR\*.dat"
+  
   ;--------------------------
   ; Install the new files
   ;--------------------------
@@ -424,7 +429,7 @@ Section ""
 SectionEnd
 
 Function .onInstSuccess
-  ${StdUtils.ExecShellAsUser} $0 '"$EXEDIR\chrome.exe" "about:" "${SourceCode_URL}/?view=log"' "open" ""
+  ${StdUtils.ExecShellAsUser} $0 "$EXEDIR\chrome.exe" "open" "${About_URL}"
 FunctionEnd
 
 Function .onInit
