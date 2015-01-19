@@ -353,7 +353,6 @@ Section ""
   SuccessfullyExtracted:
   Delete "$PLUGINSDIR\chrome-win32.zip"
   Delete "$PLUGINSDIR\unzip.exe"
-  Delete "$PLUGINSDIR\cache\chrome-win32\*.manifest"
 
   ;--------------------------
   ; Files complete?
