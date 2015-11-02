@@ -27,6 +27,7 @@
 ; Includes
 !include WinVer.nsh
 !include StdUtils.nsh
+!include x64.nsh
 
 ; Global Symbols
 !define BuildBot_URL "http://commondatastorage.googleapis.com/"		;chromium-browser-snapshots" ;"http://build.chromium.org/f/chromium/"
@@ -249,7 +250,7 @@ Section ""
   ReadINIStr $Channel "$EXEDIR\$EXEFILE.ini" "ChromiumUpdater" "channel"
   IfErrors NotConfiguredYet
 
-  StrCmp $Channel "snapshots" ConfigurationDone
+  StrCmp $Channel "snapshots"  ConfigurationDone
   StrCmp $Channel "continuous" ConfigurationDone
   
   NotConfiguredYet:
@@ -270,11 +271,17 @@ Section ""
   ; Set Address
   ;--------------------------
   
-  StrCmp $Channel "continuous" 0 +2
-  StrCpy $Address "${BuildBot_URL}${Path_Continuous}/Win"
+  ${If} $Channel == "continuous"
+    StrCpy $Address "${BuildBot_URL}${Path_Continuous}"
+  ${Else}
+    StrCpy $Address "${BuildBot_URL}${Path_Snapshots}"
+  ${EndIf}}
 
-  StrCmp $Channel "snapshots" 0 +2
-  StrCpy $Address "${BuildBot_URL}${Path_Snapshots}/Win"
+  ${If} ${RunningX64}
+    StrCpy $Address "$Address/Win_x64"
+  ${Else}
+    StrCpy $Address "$Address/Win"
+  ${EndIf}
   
   ;--------------------------
   ; Fetch latest version

@@ -1,5 +1,5 @@
 @echo off
-set "UPDATER_VERSION=1.13"
+set "UPDATER_VERSION=1.14"
 set "NSIS=D:\NSIS\_Unicode\makensis.exe"
 
 mkdir "%~dp0\bin" 2> NUL
