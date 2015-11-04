@@ -254,7 +254,7 @@ Section ""
   StrCmp $Channel "continuous" ConfigurationDone
   
   NotConfiguredYet:
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get 'continous' Chromium builds, i.e. only builds that have passed all automated tests? (Recommended)$\n$\nOtherwise always the latest 'snapshot' build will be downloaded." IDNO GetSnapshotBuilds
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Do you want to get 'continous' Chromium builds, i.e. only builds that have passed all automated tests? (Recommended)$\n$\nOtherwise always the latest 'snapshot' build will be downloaded. Note that 64-Bit binaries are *not* available for the 'snapshot' channel!" IDNO GetSnapshotBuilds
   
   StrCpy $Channel "continuous"
   Goto SaveConfiguration
@@ -272,17 +272,15 @@ Section ""
   ;--------------------------
   
   ${If} $Channel == "continuous"
-    StrCpy $Address "${BuildBot_URL}${Path_Continuous}"
+    ${If} ${RunningX64}
+      StrCpy $Address "${BuildBot_URL}${Path_Continuous}/Win_x64"
+    ${Else}
+      StrCpy $Address "${BuildBot_URL}${Path_Continuous}/Win"
+    ${EndIf}
   ${Else}
-    StrCpy $Address "${BuildBot_URL}${Path_Snapshots}"
-  ${EndIf}}
-
-  ${If} ${RunningX64}
-    StrCpy $Address "$Address/Win_x64"
-  ${Else}
-    StrCpy $Address "$Address/Win"
+    StrCpy $Address "${BuildBot_URL}${Path_Snapshots}/Win"
   ${EndIf}
-  
+
   ;--------------------------
   ; Fetch latest version
   ;--------------------------
